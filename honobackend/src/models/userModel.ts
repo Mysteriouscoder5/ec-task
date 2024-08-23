@@ -1,9 +1,30 @@
+import { Document, Model, model, Schema, Types } from "mongoose";
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const userSchema = new mongoose.Schema(
+interface IUser extends Document {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  phone: number;
+  profileImage: string;
+  coverImage: string;
+  headline: string;
+  connections: any[];
+  location: { country: string; state: string; city: string };
+  education: any[];
+  skills: any[];
+}
+
+interface IUserMethods {
+  generateAuthToken(): string;
+  comparePassword(): boolean;
+}
+type UserModel = Model<IUser, {}, IUserMethods>;
+const userSchema = new Schema<IUser, UserModel, IUserMethods>(
   {
     username: {
       type: String,
@@ -37,12 +58,12 @@ const userSchema = new mongoose.Schema(
       // select: false,
     },
 
-    profilePicture: {
+    profileImage: {
       type: String,
       default: "placeholderURI",
     },
 
-    coverPicture: {
+    coverImage: {
       type: String,
       default: "",
     },
@@ -55,7 +76,7 @@ const userSchema = new mongoose.Schema(
     connections: [
       {
         connectionId: {
-          type: mongoose.Schema.Types.ObjectId,
+          type: Types.ObjectId,
           ref: "Connection",
         },
       },
@@ -90,27 +111,43 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
-    
   },
   { timestamps: true }
 );
 
-userSchema.methods.generateAuthToken = async function () {
+userSchema.method("generateAuthToken", async function () {
   try {
     const token = await jwt.sign(
-      { _id: this._id.toString() },
-      process.env.SECRET_KEY
+      { _id: this._id?.toString() },
+      process.env.JWT_SECRET
     );
     return token;
   } catch (e) {
     console.log(e);
   }
-};
+});
 
-userSchema.methods.comparePassword = async function (password) {
+userSchema.method("comparePassword", async function (password: string) {
   const checkPass = await bcrypt.compare(password, this.password);
   return checkPass;
-};
+});
+
+// userSchema.methods.generateAuthToken = async function () {
+//   try {
+//     const token = await jwt.sign(
+//       { _id: this._id.toString() },
+//       process.env.JWT_SECRET
+//     );
+//     return token;
+//   } catch (e) {
+//     console.log(e);
+//   }
+// };
+
+// userSchema.methods.comparePassword = async function (password: string) {
+//   const checkPass = await bcrypt.compare(password, this.password);
+//   return checkPass;
+// };
 
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
@@ -120,6 +157,6 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-const User = new mongoose.model("User", userSchema);
+const User = model<IUser>("User", userSchema);
 
-module.exports = User;
+export default User;
