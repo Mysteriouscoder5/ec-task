@@ -158,7 +158,7 @@ const userSignIn = async (c) => {
 
 const userLogIn = async (c) => {
   try {
-    const { body, email } = await c.req.json();
+    const { email, password } = await c.req.valid("json");
     const user = await User.findOne({ email });
     if (!user) {
       return c.json(
