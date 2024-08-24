@@ -1,15 +1,12 @@
-
+const dotenv = require("dotenv");
+dotenv.config({ path: "./src/config/config.env" });
+require("./db/connection");
 
 const express = require("express");
 const app = express();
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const path = require("path");
-
-const userRoute = require("./routes/v1/User");
-const connectionRoute = require("./routes/v1/Connection");
-
-require("./db/connection");
 
 const port = process.env.PORT;
 
@@ -39,8 +36,11 @@ app.use(
   })
 );
 
+const userRoute = require("./routes/v1/User");
+const connectionRoute = require("./routes/v1/Connection");
+
 app.use("/api/v1/user", userRoute);
-app.use("/api/v1/connection",connectionRoute)
+app.use("/api/v1/connection", connectionRoute);
 
 const server = app.listen(port, () => {
   console.log(`Listening to port ${port}`);
